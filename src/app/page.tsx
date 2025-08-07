@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 
+interface Item {
+  ItemCode: string;
+  ItemName: string;
+  ItemType: string;
+}
+
 interface BusinessPartner {
   CardCode: string;
   CardName: string;
@@ -18,6 +24,7 @@ interface Invoice {
 }
 
 export default function Home() {
+  const [item, setItem] = useState<Item[]>([])
   const [businessPartners, setBusinessPartners] = useState<BusinessPartner[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,6 +44,19 @@ export default function Home() {
     } catch (error) {
       console.error("Login failed:", error);
       setLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleFetchItems() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/fetchItems");
+      const data = await res.json();
+      setItem(data.value || []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
     } finally {
       setLoading(false);
     }
@@ -132,6 +152,22 @@ export default function Home() {
         >
           {loading ? 'Loading...' : 'Fetch Invoices'}
         </button>
+        <button
+          onClick={handleFetchItems}
+          disabled={loading || !loggedIn}
+          style={{
+            padding: "10px 24px",
+            border: "2px solid #6c5ce7", 
+            borderRadius: "8px",
+            background: loading ? "#dfe6e9" : "#fff",
+            color: "#6c5ce7",
+            fontWeight: 600,
+            cursor: loading || !loggedIn ? "not-allowed" : "pointer",
+            transition: "background 0.2s"
+          }}
+        >
+          {loading ? 'Loading...' : 'Fetch Items'}
+        </button>
       </div>
       {businessPartners.length > 0 && (
         <ul style={{ listStyle: "none", padding: 0 }}>
@@ -170,6 +206,25 @@ export default function Home() {
               <span style={{ color: "#888" }}>{invoice.CardName} ({invoice.CardCode})</span><br />
               <span>Date: {invoice.DocDate}</span><br />
               <span>Total: ${invoice.DocTotal}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {item.length > 0 && (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {item.map((item: Item) => (
+            <li
+              key={item.ItemCode}
+              style={{
+                padding: "12px 16px",
+                marginBottom: "8px",
+                border: "1px solid #eee",
+                borderRadius: "6px",
+                background: "#fafafa",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.03)"
+              }}
+            >
+              <strong>{item.ItemName}</strong> <span style={{ color: "#888" }}>({item.ItemCode})</span> - {item.ItemType}
             </li>
           ))}
         </ul>
